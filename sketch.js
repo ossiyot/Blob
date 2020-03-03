@@ -80,9 +80,13 @@ class Flock {
    }
 
    draw() {
+      push();
+      noStroke();
+      colorMode(HSB, 1);
       for (let i = 0; i < this.size; i++) {
          this.blobs[i].draw();
       }
+      pop();
    }
 
    calculateVelocity() {
@@ -117,11 +121,8 @@ class Blob {
    }
 
    draw() {
-      push();
-      colorMode(HSB, 1); 
       fill(map(this.velocity.mag(), 0, 40, 0.7, 0.71), 1, 1);
       circle(this.position.x, this.position.y, 10);
-      pop();
    }
 }
 
