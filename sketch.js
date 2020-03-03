@@ -16,7 +16,7 @@ function draw() {
    //translate(-width/2,-height/2,0);
 
    flock.calculateVelocity();
-   flock.update(3 * deltaTime/1000);
+   flock.update(1 * deltaTime/1000);
    flock.draw();
 
 }
@@ -28,7 +28,7 @@ function windowResized() {
 function attractionFunction(distance, amount) {
    let x = distance;
    // Divider recommended to be close to group size
-   let velocityMultiplier = 18 * log(x/300);
+   let velocityMultiplier = 18 * log(x/400);
    return velocityMultiplier;
 }
 
@@ -49,7 +49,7 @@ function velocityAwayFromMouse(blob) {
    let mousePosition = createVector(mouseX, mouseY);
    let velocityAwayFromMouse = p5.Vector.sub(blob.position, mousePosition);
    let distanceFromMouse = p5.Vector.dist(blob.position, mousePosition);
-   return velocityAwayFromMouse.setMag(1/distanceFromMouse * 5000);
+   return velocityAwayFromMouse.setMag(1/distanceFromMouse * 35000);
 }
 
 function velocityTowardsCenter(blob) {
@@ -57,7 +57,7 @@ function velocityTowardsCenter(blob) {
    let velocity = p5.Vector.sub(centerPosition, blob.position);
    let distance = p5.Vector.dist(centerPosition, blob.position);
    velocity.normalize();
-   velocity.mult(distance/20);
+   velocity.mult(distance/5);
    return velocity;
 }
 
@@ -94,7 +94,7 @@ class Flock {
             }
          }
          totalVelocity.add(velocityTowardsCenter(this.blobs[i]));
-         totalVelocity.limit(40);
+         totalVelocity.limit(120);
          totalVelocity.add(velocityAwayFromMouse(this.blobs[i]));
          this.blobs[i].applyVelocity(totalVelocity);
       }
@@ -119,7 +119,7 @@ class Blob {
    draw() {
       push();
       colorMode(HSB, 1); 
-      fill(map(this.velocity.mag(), 0, 40, 0, 0.1), 1, 1);
+      fill(map(this.velocity.mag(), 0, 40, 0.7, 0.71), 1, 1);
       circle(this.position.x, this.position.y, 10);
       pop();
    }
