@@ -1,27 +1,64 @@
 let flock;
 
 function setup() {
-   createCanvas(1280, 720);
+   createCanvas(windowWidth, windowHeight);
+   //createCanvas(windowWidth, windowHeight, WEBGL);
    frameRate(60);
-
-   flock = new Flock(40);
+   smooth();
+   flock = new Flock(300);
    flock.init();
 }
 
 function draw() {
    background(51);
-   flock.calculateForce();
+
+   // WEBGL only
+   //translate(-width/2,-height/2,0);
+
+   flock.calculateVelocity();
    flock.update(3 * deltaTime/1000);
    flock.draw();
+
 }
 
-function forceFunction(distance) {
+function windowResized() {
+   resizeCanvas(windowWidth, windowHeight);
+ }
+
+function attractionFunction(distance, amount) {
    let x = distance;
-   let forceMultiplier = (0.1*x-3)**3;
-   if (!(forceMultiplier < 100)) {
-      return 100;
+   // Divider recommended to be close to group size
+   let velocityMultiplier = 18 * log(x/300);
+   return velocityMultiplier;
+}
+
+function velocityTowardsOther(baseBlob, targetBlob) {
+   // Get vector which points to other blob
+   let velocity = p5.Vector.sub(targetBlob.position, baseBlob.position);
+
+   // Set vector magnitude with specified equation
+   velocity.normalize();
+   let distance = p5.Vector.dist(baseBlob.position, targetBlob.position);
+   return velocity.mult(attractionFunction(distance));
+}
+
+function velocityAwayFromMouse(blob) {
+   if (!(mouseX <= width && mouseX >= 0 && mouseY <= height && mouseY >= 0)) {
+      return createVector(0, 0);
    }
-   return forceMultiplier;
+   let mousePosition = createVector(mouseX, mouseY);
+   let velocityAwayFromMouse = p5.Vector.sub(blob.position, mousePosition);
+   let distanceFromMouse = p5.Vector.dist(blob.position, mousePosition);
+   return velocityAwayFromMouse.setMag(1/distanceFromMouse * 5000);
+}
+
+function velocityTowardsCenter(blob) {
+   let centerPosition = createVector(width/2, height/2);
+   let velocity = p5.Vector.sub(centerPosition, blob.position);
+   let distance = p5.Vector.dist(centerPosition, blob.position);
+   velocity.normalize();
+   velocity.mult(distance/20);
+   return velocity;
 }
 
 class Flock {
@@ -48,42 +85,41 @@ class Flock {
       }
    }
 
-   calculateForce() {
+   calculateVelocity() {
       for (let i = 0; i < this.size; i++) {
-         let totalForce = createVector(0, 0);
+         let totalVelocity = createVector(0, 0);
          for (let j = 0; j < this.size; j++) {
             if (i != j) {
-               let distance = p5.Vector.dist(this.blobs[i].position, this.blobs[j].position);
-               let force = p5.Vector.sub(this.blobs[j].position, this.blobs[i].position);
-               force.normalize();
-               force.mult(forceFunction(distance));
-               totalForce.add(force);
+               totalVelocity.add(velocityTowardsOther(this.blobs[i], this.blobs[j]));
             }
          }
-         this.blobs[i].applyForce(totalForce);
+         totalVelocity.add(velocityTowardsCenter(this.blobs[i]));
+         totalVelocity.limit(40);
+         totalVelocity.add(velocityAwayFromMouse(this.blobs[i]));
+         this.blobs[i].applyVelocity(totalVelocity);
       }
    }
+
 }
 
 class Blob {
    constructor(x, y, m) {
       this.position = createVector(x, y);
       this.velocity = createVector(0, 0);
-      this.accleration = createVector(0, 0);
-      this.mass = m;
    }
 
    update(t) {
-      this.velocity.add(p5.Vector.mult(this.accleration, t));
       this.position.add(p5.Vector.mult(this.velocity, t));;
    }
 
-   applyForce(force) {
-      this.accleration = force.div(this.mass);
+   applyVelocity(velocity) {
+      this.velocity = velocity;
    }
 
    draw() {
       push();
+      colorMode(HSB, 1); 
+      fill(map(this.velocity.mag(), 0, 40, 0, 0.1), 1, 1);
       circle(this.position.x, this.position.y, 10);
       pop();
    }
