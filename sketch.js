@@ -28,7 +28,7 @@ function windowResized() {
 function attractionFunction(distance, amount) {
    let x = distance;
    // Divider recommended to be close to group size
-   let velocityMultiplier = 18 * log(x/400);
+   let velocityMultiplier = 18 * log(x/300);
    return velocityMultiplier;
 }
 
